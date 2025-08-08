@@ -1,16 +1,19 @@
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
 import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import Message
 
 TOKEN = "8218677693:AAGinXaUWvXP-QafxKWLF-4gYnKgnGoMBDs"
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Բարև, Render-ից աշխատող նոր բոտ եմ։")
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
 
-def main():
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.run_polling()
+@dp.message(commands=["start"])
+async def cmd_start(message: Message):
+    await message.answer("Բարև, Render-ից աշխատող aiogram բոտ եմ։")
 
-if __name__ == '__main__':
-    main()
+async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
