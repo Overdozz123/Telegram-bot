@@ -116,7 +116,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 if __name__ == '__main__':
     init_db()
-    TOKEN = 'YOUR_BOT_TOKEN_HERE'  # Կներդնես քո bot token-ը այստեղ
+    TOKEN = '8200873228:AAGLKVU0BoeZSok9m_SvaQNh81xc7fyHOns'  # Կներդնես քո bot token-ը այստեղ
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CallbackQueryHandler(select_serial, pattern='^serial_'))
