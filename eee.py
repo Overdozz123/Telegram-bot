@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
@@ -97,8 +98,10 @@ async def approve_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn.commit()
 
 if __name__ == '__main__':
+    import os
+    TOKEN = os.getenv("TOKEN")
     init_db()
-    app = ApplicationBuilder().token('8200873228:AAGLKVU0BoeZSok9m_SvaQNh81xc7fyHOns').build()
+    app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CallbackQueryHandler(select_serial, pattern='^serial_'))
     app.add_handler(CallbackQueryHandler(approve_reject, pattern='^(approve|reject)_'))
