@@ -99,7 +99,7 @@ async def approve_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     import os
-    TOKEN = os.getenv("TOKEN")
+    TOKEN = os.getenv("8200873228:AAGLKVU0BoeZSok9m_SvaQNh81xc7fyHOns")
     init_db()
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
