@@ -1,9 +1,18 @@
+import sys
+import logging
 import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters, Application
+
+# Լոգինգ կարգավորում
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 ADMIN_ID = 6554648509
-JOIN_LINK = 'https://t.me/+sxApB1z7I0Q1YTNi'  # Ջոինի հղումը՝ բոլորի համար նույնը
+JOIN_LINK = 'https://t.me/+sxApB1z7I0YTNi'  # Ջոինի հղումը՝ բոլորի համար նույնը
 
 WATCH_LINKS = {
     'Vendetta': 'https://t.me/+mK5kDslMzY4wYjZi',
@@ -24,6 +33,11 @@ def init_db():
         conn.commit()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Դիտարկում ենք Python և գրադարանի տարբերակները լոգերում
+    logger.info(f"Python version: {sys.version}")
+    import telegram
+    logger.info(f"python-telegram-bot version: {telegram.__version__}")
+
     keyboard = [
         [InlineKeyboardButton('Vendetta', callback_data='serial_Vendetta')],
         [InlineKeyboardButton('11', callback_data='serial_11')]
@@ -96,6 +110,12 @@ async def approve_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text('Մերժվեց։')
         conn.commit()
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    # Կարող ես նաև օգտվողին ուղարկել հաղորդագրություն, եթե ուզում ես
+    # if update and update.effective_message:
+    #     await update.effective_message.reply_text("Հրաշալի, մի քիչ տեխնիկական խնդիր առաջացավ, փորձիր կրկին:")
+
 if __name__ == '__main__':
     init_db()
     app = ApplicationBuilder().token('8200873228:AAGLKVU0BoeZSok9m_SvaQNh81xc7fyHOns').build()
@@ -103,5 +123,6 @@ if __name__ == '__main__':
     app.add_handler(CallbackQueryHandler(select_serial, pattern='^serial_'))
     app.add_handler(CallbackQueryHandler(approve_reject, pattern='^(approve|reject)_'))
     app.add_handler(MessageHandler(filters.PHOTO & (~filters.COMMAND), handle_photo))
+    app.add_error_handler(error_handler)
     print('Bot is running...')
     app.run_polling()
