@@ -61,9 +61,7 @@ async def select_serial(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Սքրինշոթ ստանալուց հետո
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    chat_id = update.effective_chat.id
 
-    # Դիմադրություն approval-ի համար
     keyboard = [
         [
             InlineKeyboardButton("✅ Հաստատել", callback_data=f"approve_{user.id}"),
@@ -72,7 +70,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    admin_chat_id = "6554648509"  # փոխիր admin ID-ով
+    admin_chat_id = 6554648509  # Փոխիր քո Telegram ID-ի հետ (համար, որպես int)
 
     await context.bot.send_photo(
         chat_id=admin_chat_id,
@@ -103,11 +101,11 @@ async def approve_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if result:
             serial = result[0]
             if serial == "vendetta":
-                link = "https://t.me/+VendettaPageLink"  # փոխիր
+                link = "https://t.me/+VendettaPageLink"  # Փոխիր իրական հղումով
             elif serial == "11":
-                link = "https://t.me/+11SerialLink"  # փոխիր
+                link = "https://t.me/+11SerialLink"      # Փոխիր իրական հղումով
             else:
-                link = "https://t.me/yourchannel"
+                link = "https://t.me/yourchannel"       # Նախապես սահմանված հղում
 
             await context.bot.send_message(
                 chat_id=user_id,
