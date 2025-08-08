@@ -16,7 +16,7 @@ def init_db():
             id INTEGER PRIMARY KEY,
             username TEXT,
             selected_serial TEXT,
-            approved INTEGER
+            approved INTEGER DEFAULT 0
         )
     """)
     conn.commit()
@@ -27,8 +27,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO users (id, username, approved) VALUES (?, ?, ?)",
-              (user.id, user.username, 0))
+    c.execute("INSERT OR IGNORE INTO users (id, username) VALUES (?, ?)",
+              (user.id, user.username))
     conn.commit()
     conn.close()
 
@@ -70,7 +70,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    admin_chat_id = 6554648509  # Փոխիր քո Telegram ID-ի հետ (համար, որպես int)
+    admin_chat_id = 6554648509  # Փոխիր քո ադմինի ID-ով (տիպա int)
 
     await context.bot.send_photo(
         chat_id=admin_chat_id,
@@ -105,7 +105,7 @@ async def approve_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
             elif serial == "11":
                 link = "https://t.me/+11SerialLink"      # Փոխիր իրական հղումով
             else:
-                link = "https://t.me/yourchannel"       # Նախապես սահմանված հղում
+                link = "https://t.me/yourchannel"
 
             await context.bot.send_message(
                 chat_id=user_id,
