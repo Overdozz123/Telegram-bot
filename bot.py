@@ -1,10 +1,16 @@
-import sys
-import logging
 import sqlite3
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters, Application
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    MessageHandler,
+    filters
+)
 
-# Լոգինգ կարգավորում
+# Լոգինգ
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -12,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 ADMIN_ID = 6554648509
-JOIN_LINK = 'https://t.me/+sxApB1z7I0YTNi'  # Ջոինի հղումը՝ բոլորի համար նույնը
+JOIN_LINK = 'https://t.me/+sxApB1z7I0YTNi'
 
 WATCH_LINKS = {
     'Vendetta': 'https://t.me/+mK5kDslMzY4wYjZi',
@@ -33,11 +39,6 @@ def init_db():
         conn.commit()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Դիտարկում ենք Python և գրադարանի տարբերակները լոգերում
-    logger.info(f"Python version: {sys.version}")
-    import telegram
-    logger.info(f"python-telegram-bot version: {telegram.__version__}")
-
     keyboard = [
         [InlineKeyboardButton('Vendetta', callback_data='serial_Vendetta')],
         [InlineKeyboardButton('11', callback_data='serial_11')]
@@ -60,6 +61,70 @@ async def select_serial(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(f'Դուք ընտրեցիք "{serial}" սերիալը։')
     await context.bot.send_message(
         chat_id=user_id,
+        text=f'Պարտադիր միացեք այս էջին 👉 {JOIN_LINK} և ուղարկեք Screenshot որտեղ դուք join եք եղել էջին։'
+    )
+
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    with sqlite3.connect('vondeta.db') as conn:
+        c = conn.cursor()
+        c.execute('SELECT serial FROM users WHERE user_id = ?', (user.id,))
+        row = c.fetchone()
+    serial = row[0] if row else 'Չի նշված'
+
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Հաստատել", callback_data=f'approve_{user.id}'),
+            InlineKeyboardButton("❌ Մերժել", callback_data=f'reject_{user.id}')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=f'Ստուգեք @{user.username} (ID: {user.id}) — ընտրած սերիալը՝ {serial}'
+    )
+    await context.bot.forward_message(chat_id=ADMIN_ID, from_chat_id=update.message.chat_id, message_id=update.message.message_id)
+    await context.bot.send_message(chat_id=ADMIN_ID, text='Ընտրեք գործողությունը.', reply_markup=reply_markup)
+
+    await update.message.reply_text('Ձեր նկարը ուղարկվել է հաստատման։ Սպասեք։')
+
+async def approve_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    action, target_str = query.data.split('_')
+    target_user_id = int(target_str)
+    with sqlite3.connect('vondeta.db') as conn:
+        c = conn.cursor()
+        c.execute('SELECT serial FROM users WHERE user_id = ?', (target_user_id,))
+        row = c.fetchone()
+        serial = row[0] if row else 'Չի նշված'
+        if action == 'approve':
+            c.execute('UPDATE users SET approved = 1 WHERE user_id = ?', (target_user_id,))
+            await context.bot.send_message(chat_id=target_user_id,
+                                           text=f'✅ Հաստատվեց։ Ահա դիտման լինկը 👉 {WATCH_LINKS.get(serial, "Չի գտնվել լինկը")}')
+            await query.edit_message_text('Հաստատվեց և ուղարկվեց օգտվողին։')
+        else:
+            c.execute('UPDATE users SET approved = -1 WHERE user_id = ?', (target_user_id,))
+            await context.bot.send_message(chat_id=target_user_id,
+                                           text='❌ Ձեր հարցումը մերժվեց։ Խնդրում ենք ստուգել և կրկին փորձել։')
+            await query.edit_message_text('Մերժվեց։')
+        conn.commit()
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+
+if __name__ == '__main__':
+    init_db()
+    TOKEN = 'YOUR_BOT_TOKEN_HERE'  # Կներդնես քո bot token-ը այստեղ
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler('start', start))
+    app.add_handler(CallbackQueryHandler(select_serial, pattern='^serial_'))
+    app.add_handler(CallbackQueryHandler(approve_reject, pattern='^(approve|reject)_'))
+    app.add_handler(MessageHandler(filters.PHOTO & (~filters.COMMAND), handle_photo))
+    app.add_error_handler(error_handler)
+    print('Bot is running...')
+    app.run_polling()        chat_id=user_id,
         text=f'Պարտադիր միացեք այս էջին 👉 {JOIN_LINK} և ուղարկեք Screenshot որտեղ դուք join եք եղել էջին։'
     )
 
